@@ -98,11 +98,11 @@ impl Type {
                 let def =
                     winmd::TypeDefOrRef::decode(blob.reader, blob.read_unsigned(), blob.file_index);
 
-                if def.name().0.is_empty() {
-                    TypeKind::Struct(nested[def.name().1].name.clone())
-                } else {
+                    if def.name().0.is_empty() {
+                        TypeKind::NotYetSupported
+                    } else {
                     TypeKind::from_type_def_or_ref(&def, generics, calling_namespace)
-                }
+                    }
             }
             0x13 => generics[blob.read_unsigned() as usize].clone(),
             0x14 => {
@@ -351,7 +351,7 @@ impl TypeKind {
             ("Windows.Win32.SystemServices", "ULARGE_INTEGER") => Self::U64,
             ("Windows.Win32.Direct2D", "D2D_MATRIX_3X2_F") => Self::Matrix3x2,
             (namespace, name) => Self::from_type_def(
-                &type_ref.reader.expect_type_def((namespace, name)),
+                &type_ref.resolve(),
                 calling_namespace,
             ),
         }
@@ -498,7 +498,10 @@ impl TypeKind {
                 quote! { <#name as ::windows::Abi>::Abi }
             }
             Self::Enum(name) => name.gen(),
-            Self::Struct(name) => name.gen_abi(),
+            Self::Struct(name) => {
+                let name = name.gen();
+                quote! { <#name as ::windows::Abi>::Abi }
+            }
             Self::NotYetSupported => quote!(::windows::NOT_YET_SUPPORTED_TYPE),
         }
     }
@@ -603,11 +606,21 @@ impl TypeKind {
                 | Self::Matrix3x2
                 | Self::Enum(_) => true,
                 | Self::Struct(name) => {
-                    // TODO: only true if all fields are blittable as well
-                    true
+                    is_blittable(&name.def)
                 }
                 _ => false,
             }
         }
     
+}
+
+// TODO: This whole function should be pushed dowwn into the TypeDef to avoid having to create the heavy Type struct.
+fn is_blittable(def: &winmd::TypeDef) -> bool {
+    def.fields().all(|field| {
+        if field.flags().literal() {
+            true
+        } else {
+            Type::from_field(&field, "", &Default::default()).kind.is_blittable()
+        }
+    })
 }

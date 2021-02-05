@@ -55,5 +55,5 @@ pub use const_sha1::ConstBuffer;
 #[repr(transparent)]
 pub struct NOT_YET_SUPPORTED_TYPE {
     /// ensures the type cannot be constructed
-    _priv: u8,
+    pub _priv: u8,
 }
