@@ -158,8 +158,8 @@ impl TypeReader {
 
             for row in 0..row_count {
                 let row = Row::new(row, TableIndex::NestedClass, index as u16);
-                let nested = Row::new(reader.u32(row, 0), TableIndex::TypeDef, index as u16);
-                let enclosing = Row::new(reader.u32(row, 1), TableIndex::TypeDef, index as u16);
+                let nested = Row::new(reader.u32(row, 0) - 1, TableIndex::TypeDef, index as u16);
+                let enclosing = Row::new(reader.u32(row, 1) - 1, TableIndex::TypeDef, index as u16);
 
                 nested_types.entry(enclosing).or_default().push(nested);
             }

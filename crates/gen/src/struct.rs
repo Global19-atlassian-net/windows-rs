@@ -194,32 +194,6 @@ impl Struct {
             }
         };
 
-        let clones = if self.is_typedef {
-            let clones = self.fields.iter().enumerate().map(|(index, (_, kind))| {
-                let index = Literal::u32_unsuffixed(index as u32);
-                let clone = kind.gen_clone(&quote! { #index });
-                quote! {
-                    #clone
-                }
-            });
-
-            quote! {
-                Self( #(#clones),* )
-            }
-        } else {
-            let clones = self.fields.iter().map(|(name, kind)| {
-                let name = format_ident(&name);
-                let clone = kind.gen_clone(&quote! { #name });
-                quote! {
-                    #name: #clone
-                }
-            });
-
-            quote! {
-                Self{ #(#clones),* }
-            }
-        };
-
         let debug_fields = self
             .fields
             .iter()
@@ -302,13 +276,15 @@ impl Struct {
             }
         };
 
-        let copy = if self.fields.iter().all(|field| field.1.kind.primitive()) {
-            quote! {
-                impl ::std::marker::Copy for #name {}
-            }
-        } else {
-            quote! {}
-        };
+        // TODO: if blittable then avoid creating a separate ABI struct
+
+         let copy = if self.fields.iter().all(|field| field.1.kind.is_blittable()) {
+             quote! {
+                 impl ::std::marker::Copy for #name {}
+             }
+         } else {
+             quote! {}
+         };
 
         let debug_name = &self.name.name;
 
@@ -318,8 +294,10 @@ impl Struct {
             quote! {
                 #[repr(C)]
                 #[allow(non_snake_case)]
+                #[derive( ::std::clone::Clone)]
                 pub union #name #body
                 #(#nested)*
+                #copy
             }
         } else {
             if self
@@ -330,16 +308,19 @@ impl Struct {
                 quote! {
                     #[repr(C)]
                     #[allow(non_snake_case)]
+                    #[derive( ::std::clone::Clone)]
                     pub struct #name #body
                     impl #name {
                         #(#constants)*
                     }
                     #(#nested)*
+                    #copy
                 }
             } else {
                 quote! {
                     #[repr(C)]
                     #[allow(non_snake_case)]
+                    #[derive( ::std::clone::Clone)]
                     pub struct #name #body
                     #[repr(C)]
                     #[doc(hidden)]
@@ -360,11 +341,6 @@ impl Struct {
                             fmt.debug_struct(#debug_name)
                                 #(#debug_fields)*
                                 .finish()
-                        }
-                    }
-                    impl ::std::clone::Clone for #name {
-                        fn clone(&self) -> Self {
-                            #clones
                         }
                     }
                     impl ::std::cmp::PartialEq for #name {

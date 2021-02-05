@@ -563,7 +563,6 @@ impl TypeKind {
         }
     }
 
-    // TODO: make recursive blittable test?
     pub fn primitive(&self) -> bool {
         match self {
             Self::Bool
@@ -581,4 +580,34 @@ impl TypeKind {
             _ => false,
         }
     }
+
+        pub fn is_blittable(&self) -> bool {
+            match self {
+                Self::Bool
+                | Self::Char
+                | Self::I8
+                | Self::U8
+                | Self::I16
+                | Self::U16
+                | Self::I32
+                | Self::U32
+                | Self::I64
+                | Self::U64
+                | Self::F32
+                | Self::F64 
+                | Self::ISize
+                | Self::USize
+                | Self::Guid
+                | Self::ErrorCode
+                | Self::Bool32
+                | Self::Matrix3x2
+                | Self::Enum(_) => true,
+                | Self::Struct(name) => {
+                    // TODO: only true if all fields are blittable as well
+                    true
+                }
+                _ => false,
+            }
+        }
+    
 }
