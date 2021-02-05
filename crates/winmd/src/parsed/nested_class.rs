@@ -8,13 +8,13 @@ pub struct NestedClass {
     pub row: Row,
 }
 
-impl NestedClass {
-
-}
+impl NestedClass {}
 
 impl std::fmt::Debug for NestedClass {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("NestedClass").field("row", &self.row).finish()
+        f.debug_struct("NestedClass")
+            .field("row", &self.row)
+            .finish()
     }
 }
 

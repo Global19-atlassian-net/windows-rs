@@ -310,8 +310,11 @@ impl File {
             &file.tables[TableIndex::MethodDef as usize],
         ]);
 
-        let implementation =
-            composite_index_size(&[&unused_file, &file.tables[TableIndex::AssemblyRef as usize], &unused_exported_type]);
+        let implementation = composite_index_size(&[
+            &unused_file,
+            &file.tables[TableIndex::AssemblyRef as usize],
+            &unused_exported_type,
+        ]);
 
         let custom_attribute_type = composite_index_size(&[
             &file.tables[TableIndex::MethodDef as usize],
@@ -351,8 +354,22 @@ impl File {
             string_index_size,
             blob_index_size,
         );
-        unused_assembly_ref_os.set_columns(4, 4, 4, file.tables[TableIndex::AssemblyRef as usize].index_size(), 0, 0);
-        unused_assembly_ref_processor.set_columns(4, file.tables[TableIndex::AssemblyRef as usize].index_size(), 0, 0, 0, 0);
+        unused_assembly_ref_os.set_columns(
+            4,
+            4,
+            4,
+            file.tables[TableIndex::AssemblyRef as usize].index_size(),
+            0,
+            0,
+        );
+        unused_assembly_ref_processor.set_columns(
+            4,
+            file.tables[TableIndex::AssemblyRef as usize].index_size(),
+            0,
+            0,
+            0,
+            0,
+        );
         unused_class_layout.set_columns(
             2,
             4,

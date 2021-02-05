@@ -16,18 +16,24 @@ impl TypeRef {
         (self.reader.str(self.row, 2), self.reader.str(self.row, 1))
     }
 
-    // TODO: still need a way to get the list of nested types for a given struct so they can be defined. 
+    // TODO: still need a way to get the list of nested types for a given struct so they can be defined.
     // Provide that in the TypeReader and then the following function can use that once it has the enclosing type def.
 
     // TODO: push this method into the TypeReader?
     pub fn resolve(&self) -> TypeDef {
         if let ResolutionScope::TypeRef(scope) = self.scope() {
             let enclosing_type = self.reader.expect_type_def(scope.name());
-            let row = self.reader.nested_types[&enclosing_type.row].iter().find(|nested_type| {
-                self.reader.str(**nested_type, 1) == self.reader.str(self.row, 1)
-            }).expect(&format!("Could not find nested type `{}`", self.name().1));
+            let row = self.reader.nested_types.get(&enclosing_type.row).expect("TypeRef::resolve")
+                .iter()
+                .find(|nested_type| {
+                    self.reader.str(**nested_type, 1) == self.reader.str(self.row, 1)
+                })
+                .expect(&format!("Could not find nested type `{}`", self.name().1));
 
-            TypeDef { reader:self.reader, row: *row }
+            TypeDef {
+                reader: self.reader,
+                row: *row,
+            }
         } else {
             self.reader.expect_type_def(self.name())
         }

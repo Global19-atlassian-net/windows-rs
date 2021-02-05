@@ -25,15 +25,22 @@ impl Struct {
 
         let mut nested = BTreeMap::new();
 
-        for def in name.def.nested_types() {
-            let mut def_name = TypeName::new(&def, Vec::new(), &name.namespace);
-            def_name.namespace = name.namespace;
+        // TODO: push this into the TypeReader, so I get back an iterator of TypeDefs
+        if let Some(nested_types) = name.def.reader.nested_types.get(&name.def.row) {
+            for def in nested_types {
+                let def = winmd::TypeDef {
+                    reader: name.def.reader,
+                    row: *def,
+                };
+                let mut def_name = TypeName::new(&def, Vec::new(), &name.namespace);
+                def_name.namespace = name.namespace;
 
-            // TODO: if the metadata name is not generated then perhaps just append the name
-            debug_assert!(def_name.name.starts_with("_"));
+                // TODO: if the metadata name is not generated then perhaps just append the name
+                debug_assert!(def_name.name.starts_with("_"));
 
-            def_name.name = format!("{}_{}", name.name, nested.len());
-            nested.insert(def.name().1, Self::from_type_name(def_name));
+                def_name.name = format!("{}_{}", name.name, nested.len());
+                nested.insert(def.name().1, Self::from_type_name(def_name));
+            }
         }
 
         let mut fields = Vec::new();

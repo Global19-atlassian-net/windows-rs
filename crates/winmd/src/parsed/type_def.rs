@@ -66,29 +66,6 @@ impl TypeDef {
             })
     }
 
-    // TODO: Remove as this is broken - sadly we can't use binary search to find nested types
-    pub fn nested_types(&self) -> impl Iterator<Item = TypeDef> + '_ {
-        self.reader
-            .equal_range(
-                self.row.file_index,
-                TableIndex::NestedClass,
-                1,
-                self.row.index + 1,
-            )
-            .map(move |row| {
-                let row = Row::new(
-                    self.reader.u32(row, 1),
-                    TableIndex::TypeDef,
-                    self.row.file_index,
-                );
-
-                TypeDef {
-                    reader: self.reader,
-                    row,
-                }
-            })
-    }
-
     pub fn attributes(&self) -> impl Iterator<Item = Attribute> + '_ {
         self.reader
             .equal_range(
